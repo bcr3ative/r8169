@@ -23,8 +23,8 @@ For a haswell system on idle output should look something like that:
 |   2|  0,16|  0,01|  6,84| 50,04| 97,35| 31,23|  0,00|  1,52| 98,48|  2493|  0,00|  0,00|  0,00|  0,21|  0,00| 98,59
 |   6|  0,16|  0,01|  6,84| 50,04| 97,36| 31,23|  0,00|  0,57| 99,43|  2334|  0,00|  0,00|  0,00|  0,10|  0,00| 99,70
 |   3|  0,24|  0,00|  6,84| 50,04| 95,19| 31,23|  0,00|  1,54| 98,46|  2435|  0,00|  0,00|  0,00|  0,10|  0,00| 98,64
-|   7|  0,24|  0,00|  6,84| 50,04| 95,19| 31,23|  0,00|  2,26| 97,74|  2465|  0,00|  0,00|  0,01|  0,21|  0,00| 97,77 
-   
+|   7|  0,24|  0,00|  6,84| 50,04| 95,19| 31,23|  0,00|  2,26| 97,74|  2465|  0,00|  0,00|  0,01|  0,21|  0,00| 97,77
+
 States with a higher numbers are deeper thus the cores should be in C7s the package (the states that start with a 'P') should be in PC6 or higher for more than 50%. PC7 is only used when display is turned off.
 
 As long as a single device or prevents the cpu from sleeping the result looks similar to that:
@@ -38,13 +38,13 @@ As long as a single device or prevents the cpu from sleeping the result looks si
    2|  0,06|  0,12| 76,37|  0,00| 97,86| 17,02|  0,00|  1,25| 98,75|  2497|  0,00|  0,00|  0,00|  0,07|  0,06| 98,78
    6|  0,06|  0,12| 76,37|  0,00| 97,86| 17,02|  0,00|  0,59| 99,41|  2661|  0,00|  0,00|  0,00|  0,00|  0,06| 99,60
    3|  0,00|  0,07| 76,37|  0,00| 98,88| 17,02|  0,00|  0,41| 99,59|  2777|  0,00|  0,00|  0,00|  0,00|  0,07| 99,80
-   7|  0,00|  0,07| 76,37|  0,00| 98,88| 17,02|  0,00|  0,35| 99,65|  2748|  0,00|  0,00|  0,00|  0,00|  0,00| 99,92 
-   
+   7|  0,00|  0,07| 76,37|  0,00| 98,88| 17,02|  0,00|  0,35| 99,65|  2748|  0,00|  0,00|  0,00|  0,00|  0,00| 99,92
+
 PC6 and higher isn't used at all even when all cores are at a deep sleep state.
 
 To narrow the problems that prevent the cpu from sleeping you can run
 ```
-sudo lspci -vvv | fgrep "ASPM Disabled" 
+sudo lspci -vvv | fgrep "ASPM Disabled"
 ```
 To check if there are pcie devices that don't use ASPM.
 If it's only the realtek network card please use this driver to check if the problem is solved then.
@@ -58,19 +58,34 @@ You can't enable ASPM. The only thing you can do is NOT DISABLE it. That means, 
 This driver, provided by Realtek itself, worked for me to prevent the ASPM bug. Nevertheless there had been system freezes quite regularly (every 30 seconds for about 2 seconds) thus this module was unusable for me.
 
 # Installation
-Please remove/save your old r8169 module before installing this module. Its in 
-```
-/var/lib/modules/($uname -r)/kernel/drivers/net/ethernet/realtek/r8169.ko.gz
-```
-for me.
 
+Download `linux-headers` package using your package manager to be able to build the module.
+
+Compile and install the module:
 ```
 make
 sudo make install
 sudo depmod -a
-sudo modprobe r8169
- ```
- 
+```
+
+To check right away if the module works for your hardware configuration:
+```
+sudo rmmod r8169
+sudo modprobe r8169_aspm
+```
+Running `dmesg` should print out the results of the above commands.
+
+To make the changes permanent (work across reboots):
+1. Blacklist the in-tree kernel module, create the file `/etc/modprobe.d/no_r8169.conf` (you can name it however you want) with the following contents:
+```
+# Do not load r8169 in-tree kernel module
+blacklist r8169
+```
+2. Load the out-of-tree patched kernel module at boot time, create the file `/etc/modules-load.d/r8169_aspm.conf` (you can name it however you want) with the following contents:
+```
+# Load r8169_aspm patched kernel module
+r8169_aspm
+```
 
 [1] https://en.wikipedia.org/wiki/Active_State_Power_Management
 [2] https://lkml.org/lkml/2012/11/1/216
