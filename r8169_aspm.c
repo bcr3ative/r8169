@@ -511,7 +511,7 @@ enum rtl8168_registers {
 #define PWM_EN				(1 << 22)
 #define RXDV_GATED_EN			(1 << 19)
 #define EARLY_TALLY_EN			(1 << 16)
-#define FORCE_CLK			(1 << 15) /* force clock request */
+#define FORCE_CLK			(1 << 15) /* Force clock request */
 };
 
 enum rtl_register_content {
@@ -8306,8 +8306,7 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		pci_disable_link_state(pdev, PCIE_LINK_STATE_L0S |
 			PCIE_LINK_STATE_L1 | PCIE_LINK_STATE_CLKPM);
 		printk(KERN_INFO "ASPM disabled in r8169\n");
-	}
-	else {
+	} else {
 		printk(KERN_INFO "ASPM enabled in r8169\n");
 	}
 
